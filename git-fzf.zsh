@@ -186,7 +186,7 @@ function gfzf-checkout
 {
   local prompt='checkout> '
   local expect=$(gfzf-expect-implode open parch diff less)
-  local out="$(git ls-files --modified --others --exclude-standard `git rev-parse --show-cdup` | \
+  local out="$(git ls-files --modified --exclude-standard `git rev-parse --show-cdup` | \
     fzf --preview 'git diff --color --unified=20 -- $(echo {} | grep -o "[^ ]*$")' \
     --query="$LBUFFER" --prompt="$prompt" --expect=$expect)"
   key=$(head -1 <<< "$out")
