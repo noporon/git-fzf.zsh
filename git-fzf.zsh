@@ -54,7 +54,7 @@ function gfzf-execute
   branch)
     local local_branch="$(git branch --list --verbose | grep -vE '^..master')"
     [ -n "$local_branch" ] && local_branch=$local_branch'\n  -\n  master' || local_branch='  -\n  master'
-    result=$(gfzf-expect branch-delete rebase insert branch-all)
+    result=$(gfzf-expect branch-delete rebase insert branch-toggle-remote)
     expect=$(head -1 <<< "$result")
     expects=($(tail -n +2 <<<  "$result"))
     out=$(echo $local_branch | tail -r | \
@@ -63,9 +63,9 @@ function gfzf-execute
     key=$(head -1 <<< "$out")
     select=$(tail -n +2 <<< "$out" | cut -b3- | cut -f1 -d' ')
     ;;
-  branch-all)
+  branch-remote)
     prompt="branch> "
-    result=$(gfzf-expect rebase insert all)
+    result=$(gfzf-expect rebase insert branch-toggle-local)
     expect=$(head -1 <<< "$result")
     expects=($(tail -n +2 <<<  "$result"))
     out=$(git for-each-ref --format='%(refname)' --sort=-committerdate refs/heads refs/remotes | \
@@ -154,7 +154,7 @@ function gfzf-execute
       branch)
         gfzf-put "git checkout $select"
         ;;
-      branch-all)
+      branch-remote)
         gfzf-put "git checkout $select"
         ;;
       branch-delete)
@@ -166,8 +166,11 @@ function gfzf-execute
       insert)
         gfzf-buffer "$select"
         ;;
-      branch-all)
-        gfzf-execute branch-all
+      branch-toggle-local)
+        gfzf-execute branch
+        ;;
+      branch-toggle-remote)
+        gfzf-execute branch-remote
         ;;
       open)
         gfzf-open $select
@@ -276,7 +279,8 @@ function gfzf-expect {
    rebase $GIT_FZF_EXPECT_REBASE \
    less $GIT_FZF_EXPECT_LESS \
    insert $GIT_FZF_EXPECT_INSERT \
-   branch-all $GIT_FZF_EXPECT_ALL \
+   branch-toggle-local $GIT_FZF_EXPECT_ALL \
+   branch-toggle-remote $GIT_FZF_EXPECT_ALL \
    open $GIT_FZF_EXPECT_OPEN \
    add-parch $GIT_FZF_EXPECT_PARCH \
    diff $GIT_FZF_EXPECT_DIFF \
