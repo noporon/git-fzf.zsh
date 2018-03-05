@@ -54,96 +54,123 @@ function gfzf-execute
   branch)
     local local_branch="$(git branch --list --verbose | grep -vE '^..master')"
     [ -n "$local_branch" ] && local_branch=$local_branch'\n  -\n  master' || local_branch='  -\n  master'
+
     result=$(gfzf-expect branch-delete rebase insert branch-toggle-remote)
     expect=$(head -1 <<< "$result")
     expects=($(tail -n +2 <<<  "$result"))
+
     out=$(echo $local_branch | tail -r | \
       fzf --preview 'git log --oneline --color {1} --' \
       --expect=${expect# } --prompt="$prompt")
+
     key=$(head -1 <<< "$out")
     select=$(tail -n +2 <<< "$out" | cut -b3- | cut -f1 -d' ')
     ;;
+
   branch-remote)
     prompt="branch> "
     result=$(gfzf-expect rebase insert branch-toggle-local)
     expect=$(head -1 <<< "$result")
     expects=($(tail -n +2 <<<  "$result"))
+
     out=$(git for-each-ref --format='%(refname)' --sort=-committerdate refs/heads refs/remotes | \
       perl -pne 's{^refs/(heads|remotes)/}{}' | \
       fzf --preview 'git log --oneline --color {1} --' \
       --expect=${expect# } --prompt="$prompt")
+
     key=$(head -1 <<< "$out")
     select=$(tail -n +2 <<< "$out" | cut -b3- | cut -f1 -d' ')
     ;;
+
   add)
     result=$(gfzf-expect open add-parch diff checkout less)
     expect=$(head -1 <<< "$result")
     expects=($(tail -n +2 <<<  "$result"))
-    out="$(git ls-files --modified --others --exclude-standard `git rev-parse --show-cdup` | \
+
+    out="$(git status -s | egrep "^.[^ ]" | \
       fzf --preview 'git diff --color --unified=20 -- $(echo {} | grep -o "[^ ]*$")' \
       --query="$LBUFFER" --prompt="$prompt" --expect=${expect# })"
+
     key=$(head -1 <<< "$out")
     select=$(tail -n +2 <<< "$out" | grep -o "[^ ]*$")
     ;;
+
   reset)
     result=$(gfzf-expect open reset-parch reset-diff reset-checkout less)
     expect=$(head -1 <<< "$result")
     expects=($(tail -n +2 <<<  "$result"))
-    out="$(git diff --cached --name-only | \
-      fzf --preview 'git diff --cached --color --unified=20 -- $(echo {}) | sed "s#^#$(git rev-parse --show-cdup)#g"' \
+
+    out="$(git status -s | egrep "^[^ \?\!]" | \
+      fzf --preview 'git diff --cached --color --unified=20 -- $(echo {} | grep -o "[^ ]*$") | sed "s#^#$(git rev-parse --show-cdup)#g"' \
       --query="$LBUFFER" --prompt="$prompt" --expect=$expect)"
+
     key=$(head -1 <<< "$out")
-    select=$(tail -n +2 <<< "$out" | sed "s#^#$(git rev-parse --show-cdup)#g")
+    select=$(tail -n +2 <<< "$out" | cut -c 4- | sed "s/ -> / /")
     ;;
+
   checkout)
     result=$(gfzf-expect open checkout-parch diff less)
     expect=$(head -1 <<< "$result")
     expects=($(tail -n +2 <<<  "$result"))
-    out="$(git ls-files --modified --exclude-standard `git rev-parse --show-cdup` | \
+
+    out="$(git status -s | egrep "^.[^ \?\!]" | \
       fzf --preview 'git diff --color --unified=20 -- $(echo {} | grep -o "[^ ]*$")' \
       --query="$LBUFFER" --prompt="$prompt" --expect=$expect)"
+
     key=$(head -1 <<< "$out")
     select=$(tail -n +2 <<< "$out" | grep -o "[^ ]*$")
     ;;
+
   clean)
-    result=$(gfzf-expect open diff-clean less)
+    result=$(gfzf-expect open less)
     expect=$(head -1 <<< "$result")
     expects=($(tail -n +2 <<<  "$result"))
-    out="$(git clean -nd -- `git rev-parse --show-cdup` | grep -o "[^ ]*$" | \
-      fzf --preview '[ $(head {} 2>/dev/null) ] && head {} || git ls-files --others -- {}' \
+
+    out="$(git clean -nd -- `git rev-parse --show-cdup` | grep -o "[^ ]*$" | grep -o ".*[^\/]" | \
+      fzf --preview '[ -d $(echo {}) ] && git ls-files --others -- {} || head {}'\
       --query="$LBUFFER" --prompt="$prompt" --expect=$expect)"
+
     key=$(head -1 <<< "$out")
     select=$(tail -n +2 <<< "$out")
     ;;
+
   log)
     prompt='log> '
-    result=$(gfzf-expect log-diff insert fixup squash reuse cherry-pick rebase log-checkout log-all less)
+    result=$(gfzf-expect log-diff insert fixup squash reuse cherry-pick rebase-i log-checkout log-all less)
     expect=$(head -1 <<< "$result")
     expects=($(tail -n +2 <<<  "$result"))
+
     out="$(git log --oneline --color | \
       fzf --preview 'git show --color {1}' \
       --prompt="$prompt" --expect=$expect)"
+
     key=$(head -1 <<< "$out")
     select=$(tail -n +2 <<< "$out" | cut -f1 -d' ')
     ;;
+
   log-all)
     prompt="log> "
-    result=$(gfzf-expect log-diff insert fixup squash reuse cherry-pick rebase log-checkout log-all less)
+    result=$(gfzf-expect log-diff insert fixup squash reuse cherry-pick rebase-i log-checkout log-all less)
     expect=$(head -1 <<< "$result")
     expects=($(tail -n +2 <<<  "$result"))
+
     out="$(git log --all --oneline --color | \
       fzf --preview 'git show --color {1}' \
       --prompt="$prompt" --expect=$expect)"
+
     key=$(head -1 <<< "$out")
     select=$(tail -n +2 <<< "$out" | cut -f1 -d' ')
     ;;
+
   stash)
     result=$(gfzf-expect pop apply drop stash-checkout open insert)
     expect=$(head -1 <<< "$result")
     expects=($(tail -n +2 <<<  "$result"))
+
     out="$(git stash list | \
       fzf --preview 'git stash show --color -p -- `echo {} | cut -f1 -d':'`' \
       --prompt="$prompt" --expect=$expect)"
+
     key=$(head -1 <<< "$out")
     select=$(tail -n +2 <<< "$out" | cut -f1 -d':')
     ;;
@@ -162,6 +189,9 @@ function gfzf-execute
         ;;
       rebase)
         gfzf-insert "git rebase $select"
+        ;;
+      rebase-i)
+        gfzf-insert "git rebase -i $select^"
         ;;
       insert)
         gfzf-buffer "$select"
@@ -223,9 +253,6 @@ function gfzf-execute
       cherry-pick)
         gfzf-insert "git cherry-pick $select"
         ;;
-      rebase)
-        gfzf-insert "git rebase -i $select~"
-        ;;
       log-checkout)
         local files=$(git show --name-only --pretty=format: $select | fzf --preview 'git show --color $select -- {}' | \
           sed "s#^#$(git rev-parse --show-cdup)#g")
@@ -277,6 +304,7 @@ function gfzf-expect {
   expectInfo=(
    branch-delete $GIT_FZF_EXPECT_DELETE \
    rebase $GIT_FZF_EXPECT_REBASE \
+   rebase-i $GIT_FZF_EXPECT_REBASE \
    less $GIT_FZF_EXPECT_LESS \
    insert $GIT_FZF_EXPECT_INSERT \
    branch-toggle-local $GIT_FZF_EXPECT_ALL \
