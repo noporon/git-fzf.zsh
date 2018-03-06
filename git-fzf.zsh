@@ -21,6 +21,7 @@ export GIT_FZF_SHORTCUT_CHECKOUT='c'
 export GIT_FZF_SHORTCUT_CLEAN='cl'
 export GIT_FZF_SHORTCUT_LOG='l'
 export GIT_FZF_SHORTCUT_STASH='s'
+export GIT_FZF_SHORTCUT_HISTORY='h'
 
 export GIT_FZF_EXPECT_BRANCH_DELETE='ctrl-d'
 export GIT_FZF_EXPECT_DELETE='ctrl-d'
@@ -174,6 +175,19 @@ function gfzf-execute
     key=$(head -1 <<< "$out")
     select=$(tail -n +2 <<< "$out" | cut -f1 -d':')
     ;;
+
+  history)
+    result=$(gfzf-expect insert)
+    expect=$(head -1 <<< "$result")
+    expects=($(tail -n +2 <<<  "$result"))
+
+    out="$(fc -l -n 1| grep git | tail -r | \
+      fzf \
+      --prompt="$prompt" --expect=$expect)"
+
+    key=$(head -1 <<< "$out")
+    select=$(tail -n +2 <<< "$out")
+    ;;
   esac
 
   if [ -n "$select" ]; then
@@ -293,6 +307,9 @@ function gfzf-execute
         if [ -n "$files" ]; then
           gfzf-insert "git checkout $select -- $(gfzf-echo-files "$files")"
         fi
+        ;;
+      history)
+        gfzf-put "$select"
         ;;
     esac
   fi
@@ -458,6 +475,13 @@ function gfzf-stash
 }
 zle -N gfzf-stash
 bindkey "$GIT_FZF_SHORTCUT$GIT_FZF_SHORTCUT_STASH" gfzf-stash
+
+function gfzf-history
+{
+  gfzf-execute history
+}
+zle -N gfzf-history
+bindkey "$GIT_FZF_SHORTCUT$GIT_FZF_SHORTCUT_HISTORY" gfzf-history
 
 function gfzf-put {
   BUFFER="$1"
