@@ -191,7 +191,7 @@ function gfzf-execute
         gfzf-insert "git rebase $select"
         ;;
       rebase-i)
-        gfzf-insert "git rebase -i $select^"
+        gfzf-insert "git rebase -i $select~"
         ;;
       insert)
         gfzf-buffer "$select"
