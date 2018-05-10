@@ -1,6 +1,8 @@
 # fpath=(~/.ghq/github.com/noporon/git-fzf.zsh(N-/) $fpath)
 # autoload -Uz git-fzf.zsh
 # git-fzf.zsh
+# export GIT_FZF_SHORTCUT_PREFIX='^g'
+# git-fzf-init
 
 # fzfの確認
 if ! which fzf > /dev/null 2>&1; then
@@ -9,10 +11,7 @@ if ! which fzf > /dev/null 2>&1; then
 fi
 
 export GIT_FZF_OPEN_EDITOR=''
-export GIT_FZF_SHORTCUT="^g"
-
-# ショートカットを削除
-bindkey -r $GIT_FZF_SHORTCUT
+export GIT_FZF_SHORTCUT_PREFIX='^g'
 
 export GIT_FZF_SHORTCUT_BRANCH='b'
 export GIT_FZF_SHORTCUT_ADD='a'
@@ -41,6 +40,23 @@ export GIT_FZF_EXPECT_STASH_POP='ctrl-p'
 export GIT_FZF_EXPECT_STASH_APPLY='ctrl-a'
 export GIT_FZF_EXPECT_STASH_DROP='ctrl-d'
 
+function git-fzf-init
+{
+  # ショートカットがctrl+g(次の行へ)の場合、削除(send-breakのときだけにする)
+  if [ "${GIT_FZF_SHORTCUT_PREFIX:0:2}" = "^g" ] && [ "$(bindkey | grep '"\^G"' | grep -o '[^ ]*$')" = "send-break" ]; then
+      bindkey -r "^g"
+  fi
+
+  bindkey "$GIT_FZF_SHORTCUT_PREFIX$GIT_FZF_SHORTCUT_BRANCH"   gfzf-branche
+  bindkey "$GIT_FZF_SHORTCUT_PREFIX$GIT_FZF_SHORTCUT_ADD"      gfzf-add
+  bindkey "$GIT_FZF_SHORTCUT_PREFIX$GIT_FZF_SHORTCUT_RESET"    gfzf-reset
+  bindkey "$GIT_FZF_SHORTCUT_PREFIX$GIT_FZF_SHORTCUT_CHECKOUT" gfzf-checkout
+  bindkey "$GIT_FZF_SHORTCUT_PREFIX$GIT_FZF_SHORTCUT_CLEAN"    gfzf-clean
+  bindkey "$GIT_FZF_SHORTCUT_PREFIX$GIT_FZF_SHORTCUT_LOG"      gfzf-log
+  bindkey "$GIT_FZF_SHORTCUT_PREFIX$GIT_FZF_SHORTCUT_STASH"    gfzf-stash
+  bindkey "$GIT_FZF_SHORTCUT_PREFIX$GIT_FZF_SHORTCUT_HISTORY"  gfzf-history
+}
+
 function gfzf-execute
 {
   local execute=$1
@@ -61,7 +77,7 @@ function gfzf-execute
     expects=($(tail -n +2 <<<  "$result"))
 
     out=$(echo $local_branch | tail -r | \
-      fzf --preview 'git log --oneline --color {1} --' \
+      fzf --preview 'git log --oneline --color {1} | tail -r --' \
       --expect=${expect# } --prompt="$prompt")
 
     key=$(head -1 <<< "$out")
@@ -80,7 +96,7 @@ function gfzf-execute
       --expect=${expect# } --prompt="$prompt")
 
     key=$(head -1 <<< "$out")
-    select=$(tail -n +2 <<< "$out" | cut -b3- | cut -f1 -d' ')
+    select=$(tail -n +2 <<< "$out")
     ;;
 
   add)
@@ -220,6 +236,9 @@ function gfzf-execute
         gfzf-open $select
         ;;
       add)
+        gfzf-put "git add -- $(gfzf-echo-files "$select")"
+        ;;
+      commit-now)
         gfzf-put "git add -- $(gfzf-echo-files "$select")"
         ;;
       add-parch)
@@ -375,7 +394,6 @@ function gfzf-branche
   gfzf-execute branch
 }
 zle -N gfzf-branche
-bindkey "$GIT_FZF_SHORTCUT$GIT_FZF_SHORTCUT_BRANCH" gfzf-branche
 
 # git addするファイルを選択できる(新規追加ファイルとか便利)
 #  ・即実行
@@ -390,7 +408,6 @@ function gfzf-add {
   gfzf-execute add
 }
 zle -N gfzf-add
-bindkey "$GIT_FZF_SHORTCUT$GIT_FZF_SHORTCUT_ADD" gfzf-add
 
 # git resetするファイルを選択できる
 #  ・即実行
@@ -407,7 +424,6 @@ function gfzf-reset
   gfzf-execute reset
 }
 zle -N gfzf-reset
-bindkey "$GIT_FZF_SHORTCUT$GIT_FZF_SHORTCUT_RESET" gfzf-reset
 
 # git checkoutするファイルを選択できる
 #  ・即実行
@@ -422,7 +438,6 @@ function gfzf-checkout
   gfzf-execute checkout
 }
 zle -N gfzf-checkout
-bindkey "$GIT_FZF_SHORTCUT$GIT_FZF_SHORTCUT_CHECKOUT" gfzf-checkout
 
 # 管理外のファイルを削除（git clean -nf）
 #  ・即実行
@@ -435,7 +450,6 @@ function gfzf-clean
   gfzf-execute clean
 }
 zle -N gfzf-clean
-bindkey "$GIT_FZF_SHORTCUT$GIT_FZF_SHORTCUT_CLEAN" gfzf-clean
 
 # git log でいろいろ
 #  ・即実行
@@ -452,7 +466,6 @@ function gfzf-log
   gfzf-execute log
 }
 zle -N gfzf-log
-bindkey "$GIT_FZF_SHORTCUT$GIT_FZF_SHORTCUT_LOG" gfzf-log
 
 function gfzf-log-all
 {
@@ -474,14 +487,12 @@ function gfzf-stash
   gfzf-execute stash
 }
 zle -N gfzf-stash
-bindkey "$GIT_FZF_SHORTCUT$GIT_FZF_SHORTCUT_STASH" gfzf-stash
 
 function gfzf-history
 {
   gfzf-execute history
 }
 zle -N gfzf-history
-bindkey "$GIT_FZF_SHORTCUT$GIT_FZF_SHORTCUT_HISTORY" gfzf-history
 
 function gfzf-put {
   BUFFER="$1"
