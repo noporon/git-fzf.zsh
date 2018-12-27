@@ -212,10 +212,10 @@ function gfzf-execute
         gfzf-put "git checkout $select"
         ;;
       branch-remote)
-        gfzf-put "git checkout $select"
+        gfzf-put "git checkout -t $select"
         ;;
       branch-delete)
-        gfzf-insert "git branch -D $select"
+        gfzf-insert "git branch -D $(gfzf-echo-files "$select")"
         ;;
       rebase)
         gfzf-insert "git rebase $select"
@@ -526,6 +526,7 @@ function gfzf-open {
       for l in $files;
       do
         # eval $(echo "open -a $GIT_FZF_OPEN_EDITOR `pwd`/$l")
+        echo "$GIT_FZF_OPEN_EDITOR $l"
         eval $(echo "$GIT_FZF_OPEN_EDITOR $l" < /dev/tty)
       done
     fi
