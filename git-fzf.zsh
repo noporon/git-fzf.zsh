@@ -39,6 +39,7 @@ export GIT_FZF_EXPECT_CHERRY_PICK='ctrl-c'
 export GIT_FZF_EXPECT_STASH_POP='ctrl-p'
 export GIT_FZF_EXPECT_STASH_APPLY='ctrl-a'
 export GIT_FZF_EXPECT_STASH_DROP='ctrl-d'
+export GIT_FZF_EXPECT_REFRESH='ctrl-r'
 
 function git-fzf-init
 {
@@ -77,7 +78,7 @@ function gfzf-execute
     expects=($(tail -n +2 <<<  "$result"))
 
     out=$(echo $local_branch | tail -r | \
-      fzf --preview 'git log --oneline --color {1} | tail -r --' \
+      fzf --preview 'git log --graph --oneline --color {1}' \
       --expect=${expect# } --prompt="$prompt")
 
     key=$(head -1 <<< "$out")
@@ -92,7 +93,7 @@ function gfzf-execute
 
     out=$(git for-each-ref --format='%(refname)' --sort=-committerdate refs/heads refs/remotes | \
       perl -pne 's{^refs/(heads|remotes)/}{}' | \
-      fzf --preview 'git log --oneline --color {1} --' \
+      fzf --preview 'git log --graph --oneline --color {1}' \
       --expect=${expect# } --prompt="$prompt")
 
     key=$(head -1 <<< "$out")
