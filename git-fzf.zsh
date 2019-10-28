@@ -10,6 +10,12 @@ if ! which fzf > /dev/null 2>&1; then
   return 1
 fi
 
+if which tac >/dev/null; then
+  gfzf-tac="tac"
+else
+  gfzf-tac="gfzf-tac"
+fi
+
 export GIT_FZF_OPEN_EDITOR=''
 export GIT_FZF_SHORTCUT_PREFIX='^g'
 
@@ -77,7 +83,7 @@ function gfzf-execute
     expect=$(head -1 <<< "$result")
     expects=($(tail -n +2 <<<  "$result"))
 
-    out=$(echo $local_branch | tail -r | \
+    out=$(echo $local_branch | gfzf-tac | \
       fzf --preview 'git log --graph --oneline --color {1}' \
       --expect=${expect# } --prompt="$prompt")
 
@@ -198,7 +204,7 @@ function gfzf-execute
     expect=$(head -1 <<< "$result")
     expects=($(tail -n +2 <<<  "$result"))
 
-    out="$(fc -l -n 1| grep git | tail -r | \
+    out="$(fc -l -n 1| grep git | gfzf-tac | \
       fzf \
       --prompt="$prompt" --expect=$expect)"
 
@@ -310,7 +316,7 @@ function gfzf-execute
         local i=1
         local d
         local -a stash
-        stash=($(echo $(tail -r <<< $(echo $select | sed -e "s/[{}]/ /g" | cut -f2 -d' ' | sort -n)) | tr '\n' ' '))
+        stash=($(echo $(gfzf-tac <<< $(echo $select | sed -e "s/[{}]/ /g" | cut -f2 -d' ' | sort -n)) | tr '\n' ' '))
         for l in $stash;
         do
           if [ $i = 1 ]; then
