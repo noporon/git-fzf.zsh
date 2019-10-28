@@ -11,9 +11,9 @@ if ! which fzf > /dev/null 2>&1; then
 fi
 
 if which tac >/dev/null; then
-  gfzf-tac="tac"
+  gfzf_tac="tac"
 else
-  gfzf-tac="tail -r"
+  gfzf_tac="tail -r"
 fi
 
 export GIT_FZF_OPEN_EDITOR=''
