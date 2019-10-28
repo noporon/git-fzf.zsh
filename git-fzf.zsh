@@ -83,7 +83,7 @@ function gfzf-execute
     expect=$(head -1 <<< "$result")
     expects=($(tail -n +2 <<<  "$result"))
 
-    out=$(echo $local_branch | gfzf-tac | \
+    out=$(echo $local_branch | gfzf_tac | \
       fzf --preview 'git log --graph --oneline --color {1}' \
       --expect=${expect# } --prompt="$prompt")
 
@@ -204,7 +204,7 @@ function gfzf-execute
     expect=$(head -1 <<< "$result")
     expects=($(tail -n +2 <<<  "$result"))
 
-    out="$(fc -l -n 1| grep git | gfzf-tac | \
+    out="$(fc -l -n 1| grep git | gfzf_tac | \
       fzf \
       --prompt="$prompt" --expect=$expect)"
 
@@ -316,7 +316,7 @@ function gfzf-execute
         local i=1
         local d
         local -a stash
-        stash=($(echo $(gfzf-tac <<< $(echo $select | sed -e "s/[{}]/ /g" | cut -f2 -d' ' | sort -n)) | tr '\n' ' '))
+        stash=($(echo $(gfzf_tac <<< $(echo $select | sed -e "s/[{}]/ /g" | cut -f2 -d' ' | sort -n)) | tr '\n' ' '))
         for l in $stash;
         do
           if [ $i = 1 ]; then
