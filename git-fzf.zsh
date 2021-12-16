@@ -48,8 +48,6 @@ export GIT_FZF_EXPECT_STASH_APPLY='ctrl-a'
 export GIT_FZF_EXPECT_STASH_DROP='ctrl-d'
 export GIT_FZF_EXPECT_REFRESH='ctrl-r'
 
-git-fzf-init
-
 function git-fzf-init
 {
   # ショートカットがctrl+g(次の行へ)の場合、削除(send-breakのときだけにする)
@@ -544,3 +542,5 @@ function gfzf-open {
     open -F $(gfzf-echo-files "$@")
   fi
 }
+
+git-fzf-init
